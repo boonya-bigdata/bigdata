@@ -1,0 +1,44 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.boonya.lab</groupId>
+        <artifactId>bigdata-hadoop-3.x</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>bigdata-hadoop-3.x-hive</artifactId>
+    <packaging>jar</packaging>
+
+    <name>bigdata-hadoop-3.x-hive</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <apache.hadoop.version>3.4.0</apache.hadoop.version>
+        <apache.hive.version>4.0.0</apache.hive.version>
+    </properties>
+
+    <!-- 因为使用CDH的hadoop和hive，因此要添加CDH的官方repository，才能够下载相应的依赖包 -->
+    <!-- 如果使用Apache版本的hadoop和hive，则不需要添加该repository -->
+    <!--<repositories>
+        <repository>
+            <id>cloudera</id>
+            <url>http://repository.cloudera.com/artifactory/cloudera-repos</url>
+        </repository>
+    </repositories>-->
+
+    <dependencies>
+        <!-- 添加依赖组件，根据上方配置的版本参数和repository知识库下载依赖 -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>${apache.hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+            <version>${apache.hive.version}</version>
+        </dependency>
+    </dependencies>
+</project>
