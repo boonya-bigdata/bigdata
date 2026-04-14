@@ -22,8 +22,6 @@ import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.util.ReflectionUtils;
 
-import com.sun.corba.se.spi.ior.Writeable;
-
 public class HDFSOps {
 	
 	String location;

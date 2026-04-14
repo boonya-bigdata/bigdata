@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: flink-kafka-hdfs-demo
+
+# Flink ??
+flink:
+  kafka:
+    # ?????? localhost:9092
+    # ?????? kafka:29092
+    bootstrap-servers: localhost:9092
+    topic: user-events
+    group-id: flink-consumer-group
+  hdfs:
+    # ?????? localhost:9000
+    # ?????? namenode:9000
+    path: hdfs://localhost:9000/user/flink/events
+  checkpoint:
+    interval: 60000
+  parallelism: 2
+
+# ????
+logging:
+  level:
+    com.boonya: DEBUG
+    org.apache.flink: WARN
+    org.apache.kafka: WARN
+    org.apache.hadoop: WARN
