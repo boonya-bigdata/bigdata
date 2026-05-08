@@ -1,0 +1,82 @@
+name: BigData CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [17]
+
+    services:
+      kafka:
+        image: confluentinc/cp-kafka:7.6.0
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        ports:
+          - 9092:9092
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          cache: maven
+
+      - name: Compile
+        run: mvn compile -pl bigdata-common,bigdata-flink,bigdata-flink-kafka-hdfs,bigdata-spark,bigdata-interview -am
+
+      - name: Unit Tests
+        run: mvn test -pl bigdata-common,bigdata-flink,bigdata-interview
+
+      - name: Package
+        run: mvn package -DskipTests -pl bigdata-flink-kafka-hdfs
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flink-kafka-hdfs-jar
+          path: bigdata-flink-kafka-hdfs/target/*.jar
+
+  integration-test:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+
+      - name: Start Docker Compose
+        run: docker-compose up -d namenode datanode kafka redis mysql
+
+      - name: Wait for services
+        run: sleep 30
+
+      - name: Run Integration Tests
+        run: mvn verify -pl bigdata-flink-kafka-hdfs -Pintegration-test
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker-compose down -v

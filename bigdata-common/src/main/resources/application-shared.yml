@@ -1,0 +1,39 @@
+# ============================================================
+# 大数据项目共享配置 — 所有模块共用
+# 各模块通过 spring.profiles.include: shared 引入
+# ============================================================
+
+bigdata:
+  hadoop:
+    fs-default-fs: hdfs://namenode:9000
+    user-name: root
+    home-dir: /opt/hadoop
+  kafka:
+    bootstrap-servers: kafka:9092
+    group-id: bigdata-consumer-group
+    topic: user-events
+  flink:
+    parallelism: 2
+    checkpoint-interval: 60000
+    hdfs-output-path: hdfs://namenode:9000/flink/output
+  hbase:
+    zk-quorum: zookeeper:2181
+    root-dir: hdfs://namenode:9000/hbase
+  redis:
+    host: redis
+    port: 6379
+    password: admin
+    max-total: 20
+
+# 开发环境默认配置
+spring:
+  profiles:
+    active: dev
+
+logging:
+  level:
+    root: INFO
+    com.boonya.lab: DEBUG
+    org.apache.hadoop: WARN
+    org.apache.kafka: WARN
+    org.apache.flink: WARN

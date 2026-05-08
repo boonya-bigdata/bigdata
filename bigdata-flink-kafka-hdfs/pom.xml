@@ -41,6 +41,13 @@
     </properties>
 
     <dependencies>
+        <!-- 共享配置模块 -->
+        <dependency>
+            <groupId>com.boonya.lab</groupId>
+            <artifactId>bigdata-common</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- Spring Boot Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
