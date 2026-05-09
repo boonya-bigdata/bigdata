@@ -22,7 +22,19 @@ services:
       - hadoop_namenode:/tmp/hadoop-root/dfs/name
       - ./config/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
       - ./config/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
-    command: ["hdfs", "namenode"]
+    user: root  # 添加这一行，使用 root 用户运行
+    command:
+      - bash
+      - -c
+      - |
+        mkdir -p /tmp/hadoop-root/dfs/name
+        chmod -R 755 /tmp/hadoop-root/dfs
+        if [ ! -d "/tmp/hadoop-root/dfs/name/current" ]; then
+          echo "Formatting NameNode for the first time..."
+          hdfs namenode -format -force
+        fi
+        echo "Starting NameNode..."
+        hdfs namenode
     networks:
       - bigdata-net
 
@@ -30,11 +42,14 @@ services:
     image: apache/hadoop:3.4.0
     hostname: datanode
     container_name: datanode
+    environment:
+      - HDFS_DATANODE_DATA_DIR=/hadoop/datanode
     volumes:
-      - hadoop_datanode:/tmp/hadoop-root/dfs/data
+      - hadoop_datanode:/hadoop/datanode  # 更改挂载路径
       - ./config/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
       - ./config/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
-    command: ["hdfs", "datanode"]
+    command: [ "hdfs", "datanode" ]
+    user: root  # 临时使用root用户运行
     depends_on:
       - namenode
     networks:
@@ -176,6 +191,7 @@ services:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager
         parallelism.default: 2
+    command: jobmanager  # 添加这一行
     networks:
       - bigdata-net
 
@@ -188,6 +204,7 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 4
         parallelism.default: 2
+    command: jobmanager  # 添加这一行
     depends_on:
       - flink-jobmanager
     networks:
