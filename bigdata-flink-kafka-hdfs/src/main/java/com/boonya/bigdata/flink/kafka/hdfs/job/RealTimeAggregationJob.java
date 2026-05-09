@@ -23,7 +23,7 @@ public class RealTimeAggregationJob {
 
     public static void main(String[] args) throws Exception {
         Configuration config = new Configuration();
-        config.setString("rest.bind-port", "38081-38090");
+        config.setString("rest.bind-port", "8081-8090");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(config);
         env.setParallelism(1);
 
