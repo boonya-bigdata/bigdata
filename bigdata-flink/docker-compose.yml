@@ -1,33 +1,103 @@
 services:
+  # ==================== Flink Cluster ====================
   jobmanager:
-    image: flink:latest
+    image: flink:1.18.0-scala_2.12-java11
+    hostname: jobmanager
     ports:
-      - "8081:8081"
+      - "8081:8081"   # Flink Web UI
     command: jobmanager
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        jobmanager.memory.process.size: 1600m
+        taskmanager.memory.process.size: 1728m
+        taskmanager.numberOfTaskSlots: 4
+        parallelism.default: 4
+        rest.flamegraph.enabled: true
+    volumes:
+      - ./target:/opt/flink/usrlib
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   taskmanager:
-    image: flink:latest
+    image: flink:1.18.0-scala_2.12-java11
     depends_on:
-      - jobmanager
+      jobmanager:
+        condition: service_healthy
     command: taskmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        taskmanager.memory.process.size: 2048m
+        taskmanager.memory.managed.size: 512m
+        taskmanager.numberOfTaskSlots: 4
+        taskmanager.network.numberOfBuffers: 2048
+    volumes:
+      - ./target:/opt/flink/usrlib
     scale: 1
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2        
 
-  sql-client:
-    image: flink:latest
-    depends_on:
-      - jobmanager
-    command: bin/sql-client.sh
+  # ==================== Kafka (KRaft, 无需 Zookeeper) ====================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    ports:
+      - "9092:9092"
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        rest.address: jobmanager
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Q'
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ==================== MySQL ====================
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: flink_db
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --server-id=1
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ==================== Job Submitter (一次性) ====================
+  job-submitter:
+    image: flink:1.18.0-scala_2.12-java11
+    depends_on:
+      jobmanager:
+        condition: service_healthy
+    volumes:
+      - ./target:/opt/flink/usrlib
+    entrypoint: |
+      /bin/bash -c "
+      echo '=== Waiting for JobManager ===' &&
+      sleep 10 &&
+      echo '=== Submitting Flink job ===' &&
+      flink run -d \
+        -c com.boonya.lab.flink.FlinkApplication \
+        /opt/flink/usrlib/bigdata-flink-1.0.0-SNAPSHOT.jar &&
+      echo '=== Job submitted successfully ==='
+      "

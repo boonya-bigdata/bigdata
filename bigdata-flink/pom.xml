@@ -19,8 +19,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink.version>1.18.0</flink.version>
         <flink-kafka.version>1.17.1</flink-kafka.version>
+        <flink-connector-jdbc.version>3.1.2-1.18</flink-connector-jdbc.version>
         <scala.binary.version>2.12</scala.binary.version>
         <hadoop.version>3.3.4</hadoop.version>
+        <fastjson.version>2.0.43</fastjson.version>
+        <mysql-connector.version>8.0.33</mysql-connector.version>
     </properties>
 
     <dependencies>
@@ -74,6 +77,27 @@
             <version>${flink.version}</version>
         </dependency>
 
+        <!-- Flink JDBC Connector -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-jdbc</artifactId>
+            <version>${flink-connector-jdbc.version}</version>
+        </dependency>
+
+        <!-- MySQL JDBC Driver -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql-connector.version}</version>
+        </dependency>
+
+        <!-- FastJSON for CDC JSON parsing -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
+        </dependency>
+
         <!-- Hadoop Client (for HDFS support) -->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -114,6 +138,11 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-statebackend-rocksdb</artifactId>
+            <version>1.18.0</version>
         </dependency>
     </dependencies>
 
