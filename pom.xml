@@ -14,8 +14,8 @@
         <module>bigdata-spark</module>
         <module>bigdata-hadoop</module>
         <module>bigdata-interview</module>
-        <module>bigdata-flink-kafka-hdfs</module>
         <module>bigdata-flink</module>
+        <module>bigdata-flink-kafka-hdfs</module>
     </modules>
 
     <groupId>com.boonya.lab</groupId>

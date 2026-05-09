@@ -20,3 +20,19 @@ This module contains Apache Flink examples and applications for real-time data p
 
 ```bash
 mvn clean package
+
+```
+
+## docs
+- [Apache Flink](https://nightlies.apache.org/flink/flink-docs-release-2.3/zh/docs/getting-started/local_installation/)
+- 启动集群
+
+```bash
+docker compose up -d
+```
+
+- 停止集群
+
+```bash
+docker compose down
+```
