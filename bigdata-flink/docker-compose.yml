@@ -4,7 +4,7 @@ services:
     image: flink:1.18.0-scala_2.12-java11
     hostname: jobmanager
     ports:
-      - "8081:8081"   # Flink Web UI
+      - "8081:8081"
     command: jobmanager
     environment:
       FLINK_PROPERTIES: |
@@ -39,7 +39,7 @@ services:
       - ./target:/opt/flink/usrlib
     scale: 1
 
-  # ==================== Kafka (KRaft, 无需 Zookeeper) ====================
+  # ==================== Kafka (KRaft) ====================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     hostname: kafka
@@ -56,7 +56,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Q'
+      CLUSTER_ID: 'AAAAAAAAAAAAAAAAAAAAAA'
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list"]
       interval: 15s
@@ -83,21 +83,23 @@ services:
       timeout: 10s
       retries: 5
 
-  # ==================== Job Submitter (一次性) ====================
+  # ==================== Job Submitter（手动触发，不在 docker compose up 时自动运行）====================
   job-submitter:
     image: flink:1.18.0-scala_2.12-java11
+    profiles:
+      - submit
     depends_on:
       jobmanager:
         condition: service_healthy
     volumes:
       - ./target:/opt/flink/usrlib
-    entrypoint: |
-      /bin/bash -c "
-      echo '=== Waiting for JobManager ===' &&
-      sleep 10 &&
-      echo '=== Submitting Flink job ===' &&
-      flink run -d \
-        -c com.boonya.lab.flink.FlinkApplication \
-        /opt/flink/usrlib/bigdata-flink-1.0.0-SNAPSHOT.jar &&
-      echo '=== Job submitted successfully ==='
+    command: |
+      bash -c "
+        echo '=== Waiting for JobManager ===' &&
+        sleep 10 &&
+        echo '=== Listing available JARs ===' &&
+        ls -la /opt/flink/usrlib/ &&
+        echo '=== Submitting Flink job ===' &&
+        /opt/flink/bin/flink run -d -m jobmanager:8081 -c com.boonya.lab.flink.example.production.DataSkewHandling /opt/flink/usrlib/bigdata-flink-1.0.0-SNAPSHOT.jar &&
+        echo '=== Job submitted successfully ==='
       "
